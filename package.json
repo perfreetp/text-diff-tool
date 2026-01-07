@@ -1,0 +1,44 @@
+{
+"name": "text-diff-tool",
+  "private": true,
+  "version": "1.0.0",
+  "description": "A lightweight, browser-based text comparison tool built with Vue 3 and Vite.",
+  "author": "Calos Kao",
+  "license": "MIT",
+  "type": "module",
+  "homepage": "https://github.com/caloskao/text-diff-tool#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/caloskao/text-diff-tool.git"
+  },
+  "bugs": {
+    "url": "https://github.com/caloskao/text-diff-tool/issues"
+  },
+  "keywords": [
+    "vue",
+    "vite",
+    "diff",
+    "diff2html",
+    "text-compare",
+    "git-diff",
+    "dark-mode"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "diff": "^8.0.2",
+    "diff2html": "^3.4.52",
+    "highlight.js": "^11.11.1",
+    "vue": "^3.5.24"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.1",
+    "vite": "^7.2.4"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

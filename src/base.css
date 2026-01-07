@@ -1,0 +1,116 @@
+/* --- Global Variables & Reset --- */
+:root {
+  --bg-page: #f6f8fa;
+  --bg-container: #ffffff;
+  --bg-input: #ffffff;
+  --bg-controls: #f1f1f1;
+  --text-main: #24292f;
+  --text-dim: #57606a;
+  --border: #d0d7de;
+  --btn-primary: #2da44e;
+  --btn-secondary: #0969da;
+  --btn-text: #ffffff;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  background-color: var(--bg-page);
+  color: var(--text-main);
+  transition: background 0.2s, color 0.2s;
+}
+
+/* --- DARK MODE OVERRIDES --- */
+html.dark {
+  /* 1. System Variable Overrides */
+  --bg-page: #0d1117;
+  --bg-container: #161b22;
+  --bg-input: #0d1117;
+  --bg-controls: #21262d;
+  --text-main: #c9d1d9;
+  --text-dim: #8b949e;
+  --border: #30363d;
+  --btn-primary: #238636;
+  --btn-secondary: #1f6feb;
+  --btn-text: #ffffff;
+
+  /* 2. Diff2Html Variable Overrides */
+  --d2h-bg-color: #0d1117;
+  --d2h-trim-bg-color: #161b22;
+  --d2h-border-color: #30363d;
+  --d2h-code-scheme-color: #c9d1d9;
+  --d2h-dim-color: #8b949e; 
+  
+  /* Line Backgrounds (Low opacity for contrast) */
+  --d2h-ins-bg-color: rgba(46, 160, 67, 0.15);
+  --d2h-del-bg-color: rgba(248, 81, 73, 0.15);
+  --d2h-info-bg-color: rgba(56, 139, 253, 0.15);
+}
+
+/* --- Specific Fixes for Dark Mode --- */
+
+/* Fix 1: File Header Background */
+html.dark .d2h-file-header {
+  background-color: #161b22;
+  border-bottom: 1px solid #30363d;
+  color: #e6edf3;
+}
+
+/* Fix 1.1: Invert icons in header */
+html.dark .d2h-icon,
+html.dark .d2h-tag {
+  filter: invert(1);
+}
+
+/* Fix 2: Text Visibility for Deletions/Insertions */
+html.dark .d2h-del, 
+html.dark .d2h-code-line del, 
+html.dark .d2h-code-side-line del {
+  color: #ff7b72; /* Bright Red */
+  background-color: rgba(248, 81, 73, 0.2);
+  border-color: transparent;
+  text-decoration: none;
+}
+
+html.dark .d2h-ins, 
+html.dark .d2h-code-line ins, 
+html.dark .d2h-code-side-line ins {
+  color: #7ee787; /* Bright Green */
+  background-color: rgba(63, 185, 80, 0.2);
+  border-color: transparent;
+  text-decoration: none;
+}
+
+/* Ensure context lines are readable */
+html.dark .d2h-code-line-ctn {
+  color: #e6edf3;
+}
+
+/* Fix 3: Highlight.js Colors for Dark Mode */
+html.dark .hljs { background: transparent; color: #c9d1d9; }
+html.dark .hljs-keyword, html.dark .hljs-selector-tag { color: #ff7b72; }
+html.dark .hljs-string, html.dark .hljs-doctag { color: #a5d6ff; }
+html.dark .hljs-title, html.dark .hljs-section { color: #d2a8ff; }
+html.dark .hljs-comment { color: #8b949e; }
+html.dark .hljs-number, html.dark .hljs-literal { color: #79c0ff; }
+html.dark .hljs-attr, html.dark .hljs-attribute { color: #79c0ff; }
+
+/* Fix 4: Dark Scrollbars (WebKit) */
+html.dark ::-webkit-scrollbar { width: 12px; height: 12px; }
+html.dark ::-webkit-scrollbar-track { background: #0d1117; }
+html.dark ::-webkit-scrollbar-thumb { background-color: #30363d; border-radius: 6px; border: 3px solid #0d1117; }
+html.dark ::-webkit-scrollbar-thumb:hover { background-color: #484f58; }
+
+/* Firefox Scrollbar Support */
+html.dark * {
+  scrollbar-width: thin;
+  scrollbar-color: #30363d #0d1117;
+}
+
+/* Fix 5: Empty Placeholders in Side-by-Side View */
+html.dark .d2h-emptyplaceholder,
+html.dark .d2h-code-side-emptyplaceholder,
+html.dark .d2h-code-side-linenumber.d2h-emptyplaceholder {
+  background-color: var(--d2h-bg-color) !important;
+  border-color: var(--d2h-border-color);
+}
