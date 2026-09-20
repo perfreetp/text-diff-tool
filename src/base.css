@@ -114,3 +114,27 @@ html.dark .d2h-code-side-linenumber.d2h-emptyplaceholder {
   background-color: var(--d2h-bg-color) !important;
   border-color: var(--d2h-border-color);
 }
+/* --- Diff Navigation: active change highlight --- */
+@keyframes nav-flash {
+  0% { box-shadow: inset 0 0 0 2px var(--btn-secondary); }
+  70% { box-shadow: inset 0 0 0 2px var(--btn-secondary); }
+  100% { box-shadow: inset 0 0 0 0 transparent; }
+}
+
+.d2h-code-line.nav-active,
+tr.nav-active td.d2h-code-linenumber,
+tr.nav-active td.d2h-code-side-linenumber,
+tr.nav-active td.d2h-code-line,
+tr.nav-active td.d2h-code-side-line {
+  animation: nav-flash 1.2s ease-out 1;
+}
+tr.nav-active > td {
+  box-shadow: inset 3px 0 0 var(--btn-secondary);
+  filter: brightness(1.12);
+}
+.token-group.change.nav-active {
+  outline: 2px solid var(--btn-secondary);
+  outline-offset: 2px;
+  border-radius: 4px;
+  animation: nav-flash 1.2s ease-out 1;
+}

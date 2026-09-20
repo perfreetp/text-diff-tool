@@ -1,146 +1,178 @@
 <script setup>
-import { reactive, computed, watch, ref, onMounted } from 'vue';
-import * as Diff from 'diff';
+import { ref, computed, watch, onMounted } from 'vue';
 import { useTheme } from './composables/useTheme';
+import { useTabs } from './composables/useTabs';
+import { useDiff } from './composables/useDiff';
 
 import AppHeader from './components/AppHeader.vue';
+import TabBar from './components/TabBar.vue';
 import InputPanel from './components/InputPanel.vue';
 import ControlBar from './components/ControlBar.vue';
-import VisualDiff from './components/VisualDiff.vue';
-import RawDiff from './components/RawDiff.vue';
+import DiffResult from './components/DiffResult.vue';
 import AppFooter from './components/AppFooter.vue';
+import ConfirmModal from './components/ConfirmModal.vue';
 
-// --- State Management ---
-const STORAGE_KEY = 'diff_tool_vue_refactored';
-const UNDO_KEY = 'diff_tool_undo_buffer';
+const THEME_KEY = 'diff_tool_theme';
+const savedTheme = localStorage.getItem(THEME_KEY) || 'auto';
 
-const defaultState = {
-  left: "function hello() {\n  return 'world';\n}",
-  right: "function hello() {\n  console.log('debug');\n  return 'world';\n}",
-  format: 'side-by-side',
-  context: 4,
-  activeTab: 'visual',
-  theme: 'auto'
+const {
+  tabs,
+  activeTabId,
+  activeTab,
+  activateTab,
+  createNewTab,
+  duplicateTab,
+  renameTab,
+  closeTab,
+  tabHasContent,
+  clearActive,
+  restoreActive,
+  hasUndoData
+} = useTabs();
+
+const { patch, tokenParts, stats } = useDiff(activeTab);
+const { isDarkMode, theme } = useTheme(savedTheme);
+watch(theme, (value) => localStorage.setItem(THEME_KEY, value));
+
+// --- Header actions (scoped to the active tab) ---
+const undoAvailable = ref(hasUndoData());
+
+const handleClear = () => {
+  clearActive();
+  undoAvailable.value = true;
 };
 
-const saved = localStorage.getItem(STORAGE_KEY);
-const loadedState = saved ? { ...defaultState, ...JSON.parse(saved) } : defaultState;
-
-const state = reactive(loadedState);
-
-// --- Undo/Clear Logic ---
-const hasUndoData = ref(false);
-
-const checkUndoStatus = () => {
-  hasUndoData.value = !!localStorage.getItem(UNDO_KEY);
+const handleRestore = () => {
+  restoreActive();
+  undoAvailable.value = false;
 };
 
-// Action: Backup -> Clear
-const clearAll = () => {
-  const backup = { left: state.left, right: state.right };
-  localStorage.setItem(UNDO_KEY, JSON.stringify(backup));
-  
-  state.left = '';
-  state.right = '';
-  
-  checkUndoStatus();
-};
+const isClearable = computed(() => {
+  const tab = activeTab.value;
+  return Boolean(tab && (tab.left?.length || tab.right?.length));
+});
 
-// Action: Restore -> Clear Backup
-const restoreContent = () => {
-  const savedBackup = localStorage.getItem(UNDO_KEY);
-  if (savedBackup) {
-    const backup = JSON.parse(savedBackup);
-    state.left = backup.left || '';
-    state.right = backup.right || '';
-    
-    localStorage.removeItem(UNDO_KEY);
-    checkUndoStatus();
+// --- Tab close with confirmation for non-empty tabs ---
+const confirmState = ref({
+  show: false,
+  title: '',
+  message: '',
+  confirmText: '关闭',
+  pendingTabId: null
+});
+
+const requestCloseTab = (id) => {
+  if (tabHasContent(id)) {
+    const tab = tabs.value.find((item) => item.id === id);
+    confirmState.value = {
+      show: true,
+      title: '关闭标签页',
+      message: `「${tab?.name || '未命名对比'}」中还有未保存的文本内容，确定要关闭吗？`,
+      confirmText: '确认关闭',
+      pendingTabId: id
+    };
+  } else {
+    closeTab(id);
   }
 };
 
-// Computed: Check if inputs have content (strictly boolean)
-const isClearable = computed(() => {
-  const leftLen = state.left?.length || 0;
-  const rightLen = state.right?.length || 0;
-  return leftLen > 0 || rightLen > 0;
-});
+const confirmClose = () => {
+  if (confirmState.value.pendingTabId) {
+    closeTab(confirmState.value.pendingTabId);
+  }
+  confirmState.value.show = false;
+  confirmState.value.pendingTabId = null;
+};
 
-// --- Theme Logic ---
-const { cycleTheme, isDarkMode, theme } = useTheme(state.theme);
-watch(theme, (newVal) => state.theme = newVal);
+const cancelClose = () => {
+  confirmState.value.show = false;
+  confirmState.value.pendingTabId = null;
+};
 
-// --- Diff Logic ---
-const patch = computed(() => {
-  return Diff.createTwoFilesPatch(
-    'Original', 'Modified',
-    state.left, state.right,
-    '', '',
-    { context: Number(state.context) }
-  );
-});
+// --- Inputs ---
+const patchField = (fieldPatch) => {
+  Object.assign(activeTab.value, fieldPatch);
+};
 
-// --- Persistence ---
-watch(state, (newVal) => {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(newVal));
-}, { deep: true });
+const handleLoadFile = ({ side, name }) => {
+  activeTab.value[`${side}FileName`] = name;
+};
 
 onMounted(() => {
-  checkUndoStatus();
+  undoAvailable.value = hasUndoData();
 });
 </script>
 
 <template>
   <div class="page-wrapper">
     <div class="container">
-      
-      <AppHeader 
-        :current-theme="theme" 
-        :has-undo="hasUndoData"
+
+      <AppHeader
+        :current-theme="theme"
+        :has-undo="undoAvailable"
         :is-clearable="isClearable"
-        @set-theme="(val) => theme = val" 
-        @clear-content="clearAll"
-        @restore-content="restoreContent"
+        @set-theme="(value) => (theme = value)"
+        @clear-content="handleClear"
+        @restore-content="handleRestore"
       />
 
-      <InputPanel 
-        v-model:left="state.left" 
-        v-model:right="state.right" 
+      <TabBar
+        :tabs="tabs"
+        :active-tab-id="activeTabId"
+        @activate="activateTab"
+        @new="createNewTab"
+        @rename="renameTab"
+        @duplicate="duplicateTab"
+        @request-close="requestCloseTab"
       />
 
-      <ControlBar 
-        v-model:activeTab="state.activeTab"
-        v-model:format="state.format"
-        v-model:context="state.context"
-      />
+      <template v-if="activeTab">
+        <InputPanel
+          :left="activeTab.left"
+          :right="activeTab.right"
+          :left-file-name="activeTab.leftFileName"
+          :right-file-name="activeTab.rightFileName"
+          @update:left="activeTab.left = $event"
+          @update:right="activeTab.right = $event"
+          @load-file="handleLoadFile"
+        />
 
-      <VisualDiff 
-        v-if="state.activeTab === 'visual'"
-        :patch="patch" 
-        :format="state.format"
-        :isDarkMode="isDarkMode"
-      />
+        <ControlBar :tab="activeTab" @patch-field="patchField" />
 
-      <RawDiff 
-        v-else
-        :patch="patch"
-      />
+        <DiffResult
+          :key="activeTab.id"
+          :tab="activeTab"
+          :patch="patch"
+          :token-parts="tokenParts"
+          :stats="stats"
+          :is-dark-mode="isDarkMode"
+        />
+      </template>
 
       <AppFooter />
 
     </div>
+
+    <ConfirmModal
+      :show="confirmState.show"
+      :title="confirmState.title"
+      :message="confirmState.message"
+      :confirm-text="confirmState.confirmText"
+      @confirm="confirmClose"
+      @cancel="cancelClose"
+    />
   </div>
 </template>
 
 <style scoped>
 .page-wrapper { padding: 20px; }
-.container { 
-  max-width: 1200px; 
-  margin: 0 auto; 
-  background: var(--bg-container); 
-  padding: 20px; 
-  border-radius: 8px; 
-  box-shadow: 0 1px 3px rgba(0,0,0,0.12); 
-  border: 1px solid var(--border); 
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  background: var(--bg-container);
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+  border: 1px solid var(--border);
 }
 </style>

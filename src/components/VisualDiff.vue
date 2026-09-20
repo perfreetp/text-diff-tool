@@ -15,8 +15,8 @@ const container = ref(null);
 const draw = async () => {
   if (!container.value || !props.patch) return;
   // Clear previous content
-  container.value.innerHTML = ''; 
-  
+  container.value.innerHTML = '';
+
   const ui = new Diff2HtmlUI(container.value, props.patch, {
     drawFileList: false,
     matching: 'lines',
@@ -31,6 +31,10 @@ watch(() => [props.patch, props.format, props.isDarkMode], async () => {
   await nextTick();
   draw();
 }, { immediate: true });
+
+defineExpose({
+  getElement: () => container.value
+});
 </script>
 
 <template>
