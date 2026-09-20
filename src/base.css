@@ -114,3 +114,11 @@ html.dark .d2h-code-side-linenumber.d2h-emptyplaceholder {
   background-color: var(--d2h-bg-color) !important;
   border-color: var(--d2h-border-color);
 }
+/* --- Highlight.js palette for custom diff view (light) --- */
+.hljs-keyword, .hljs-selector-tag, .hljs-built_in { color: #cf222e; }
+.hljs-string, .hljs-doctag { color: #0a3069; }
+.hljs-title, .hljs-section, .hljs-title.function_ { color: #8250df; }
+.hljs-comment { color: #6e7781; font-style: italic; }
+.hljs-number, .hljs-literal { color: #0550ae; }
+.hljs-attr, .hljs-attribute { color: #0550ae; }
+.hljs-name, .hljs-tag { color: #116329; }
